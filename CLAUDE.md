@@ -72,10 +72,10 @@ render.yaml
 ## コマンド（実装後に有効）
 
 ```bash
-# セットアップ
-python -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash
-pip install -r requirements.txt
-cp .env.example .env   # 値を埋める
+# セットアップ（conda環境。初回のみ conda create -n reconfeed python=3.12 -y）
+conda activate reconfeed
+pip install -r requirements-dev.txt
+cp .env.example .env   # 値を埋める（Neon利用時は DATABASE_URL に ?sslmode=require&sslnegotiation=direct を付与）
 
 # DBスキーマ適用
 alembic upgrade head
@@ -104,6 +104,17 @@ pytest
 | `RESEND_API_KEY` | メール送信 | Resend ダッシュボード |
 | `RESEND_FROM_EMAIL` | 送信元アドレス | Resend でドメイン/テスト送信元を設定 |
 | `APP_BASE_URL` | メール内リンク生成用 | Renderのサービスドメイン等 |
+
+## 既知の落とし穴
+
+- **Neon (Postgres 18) は Direct SSL Negotiation を要求する**。`psycopg[binary]` は 3.3.4 以上が必要で、
+  `DATABASE_URL` の末尾に `sslnegotiation=direct` を付ける必要がある（例:
+  `...neon.tech/neondb?sslmode=require&sslnegotiation=direct`）。片方だけだと
+  `OperationalError: connection to server ... failed: server closed the connection unexpectedly`
+  という分かりにくいエラーになる（TCP/TLS自体は張れるが、Postgresプロトコルの旧来のSSLRequestネゴシエーション
+  に応答が返らないため）。`.env.example` に記載済み。
+- 本プロジェクトの Python 実行環境は **conda 環境 `reconfeed`**（`conda activate reconfeed`）。素の `python` は
+  Anaconda の base 環境を指すため、コマンド実行前に必ず `conda activate reconfeed` すること。
 
 ## 実装時の注意
 
