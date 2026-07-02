@@ -14,6 +14,16 @@ router = APIRouter()
 _TECHNIQUE_RE = re.compile(r"^T\d{4}(\.\d{3})?$", re.IGNORECASE)
 
 
+def visible_tags_for(user: User, db: Session) -> list[Tag]:
+    """Preset tags (shared) + this user's own custom tags, ordered for display in pickers."""
+    return (
+        db.query(Tag)
+        .filter((Tag.is_preset.is_(True)) | (Tag.created_by_user_id == user.id))
+        .order_by(Tag.is_preset.desc(), Tag.name)
+        .all()
+    )
+
+
 def _visible_tag_or_404(tag_id: int, user: User, db: Session) -> Tag:
     tag = (
         db.query(Tag)
