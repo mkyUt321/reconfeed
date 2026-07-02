@@ -1,0 +1,40 @@
+name: Daily fetch, match, and notify
+
+on:
+  schedule:
+    # 07:00 and 19:00 JST (22:00 and 10:00 UTC). Two runs/day stays well within every
+    # free-tier API rate limit used here; see README for the per-source numbers.
+    - cron: "0 22 * * *"
+    - cron: "0 10 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  run-daily-job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - name: Apply DB migrations
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run fetch -> match -> notify pipeline
+        run: python -m app.jobs.daily
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+          # NOTE: the secret itself cannot be named GITHUB_TOKEN (GitHub reserves that name for
+          # the automatic Actions token). Store your GitHub PAT as GH_PAT and it's mapped to the
+          # GITHUB_TOKEN env var the app actually reads here.
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}

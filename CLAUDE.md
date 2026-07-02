@@ -69,7 +69,7 @@ tests/
 render.yaml
 ```
 
-## コマンド（実装後に有効）
+## コマンド
 
 ```bash
 # セットアップ（conda環境。初回のみ conda create -n reconfeed python=3.12 -y）
@@ -89,8 +89,9 @@ uvicorn app.main:app --reload
 # 日次バッチを手動実行（取得→マッチング→配布→通知）
 python -m app.jobs.daily
 
-# テスト
-pytest
+# テスト・lint
+pytest -v
+ruff check .
 ```
 
 ## 環境変数

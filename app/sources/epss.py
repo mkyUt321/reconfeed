@@ -12,7 +12,6 @@ or re-notification. The current score is simply displayed live wherever a CVE fi
 
 import csv
 import gzip
-import io
 import logging
 
 from app.models import Finding, FindingSource
