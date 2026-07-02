@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}ウォッチリスト - ReconFeed{% endblock %}
+{% block content %}
+<h1>ウォッチリスト</h1>
+<p class="hint">タグのOR条件で検出結果を絞り込みます。1つでも該当するタグがあれば通知対象になります。</p>
+<p><a href="/watchlists/new">+ 新しいウォッチリストを作成</a></p>
+
+{% for wl in watchlists %}
+<div class="card">
+  <h2>{{ wl.name }}</h2>
+  <div class="tag-list">
+    {% for tag in wl.tags %}
+    <span class="chip">{{ tag.name }}{% if tag.is_preset %} <span class="badge badge-preset">preset</span>{% endif %}</span>
+    {% else %}
+    <span class="hint">タグが設定されていません。</span>
+    {% endfor %}
+  </div>
+  <p style="margin-top:0.75rem;">
+    <a href="/watchlists/{{ wl.id }}/edit">編集</a>
+    <form method="post" action="/watchlists/{{ wl.id }}/delete" class="inline-form" style="margin-left:1rem;"
+          onsubmit="return confirm('「{{ wl.name }}」を削除しますか？');">
+      <button type="submit" class="secondary">削除</button>
+    </form>
+  </p>
+</div>
+{% else %}
+<p class="hint">まだウォッチリストがありません。</p>
+{% endfor %}
+{% endblock %}
