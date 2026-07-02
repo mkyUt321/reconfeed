@@ -29,7 +29,7 @@ def build_haystack(finding: Finding) -> str:
 
 
 def compile_keyword_pattern(keyword: str) -> re.Pattern:
-    return re.compile(r"\b" + re.escape(keyword.lower()) + r"\b")
+    return re.compile(r"\b" + re.escape(keyword) + r"\b", re.IGNORECASE)
 
 
 def match_findings(db: Session, finding_ids: list[int]) -> int:
