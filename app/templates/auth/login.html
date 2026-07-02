@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}ログイン - ReconFeed{% endblock %}
+{% block content %}
+<h1>ログイン</h1>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="/login" class="auth-form">
+  <label>メールアドレス
+    <input type="email" name="email" value="{{ email or '' }}" required>
+  </label>
+  <label>パスワード
+    <input type="password" name="password" required>
+  </label>
+  <button type="submit">ログイン</button>
+</form>
+<p>アカウントをお持ちでないですか？ <a href="/signup">サインアップ</a></p>
+{% endblock %}

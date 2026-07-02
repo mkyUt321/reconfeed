@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}ReconFeed{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">ReconFeed</a>
+    {% if user %}
+    <nav>
+      <a href="/dashboard">ダッシュボード</a>
+      <a href="/tags">タグ</a>
+      <a href="/watchlists">ウォッチリスト</a>
+      <a href="/settings">通知設定</a>
+    </nav>
+    <form method="post" action="/logout" class="logout-form">
+      <span class="user-email">{{ user.email }}</span>
+      <button type="submit">ログアウト</button>
+    </form>
+    {% else %}
+    <nav>
+      <a href="/login">ログイン</a>
+      <a href="/signup">サインアップ</a>
+    </nav>
+    {% endif %}
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
