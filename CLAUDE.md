@@ -115,6 +115,12 @@ pytest
   に応答が返らないため）。`.env.example` に記載済み。
 - 本プロジェクトの Python 実行環境は **conda 環境 `reconfeed`**（`conda activate reconfeed`）。素の `python` は
   Anaconda の base 環境を指すため、コマンド実行前に必ず `conda activate reconfeed` すること。
+- `app/sources/*.py` の各フェッチャは**必ず初回実行時のルックバック期間の上限**を持たせること
+  （`INITIAL_LOOKBACK_DAYS` 等）。カーソル未設定時に無制限に過去へページングするフェッチャ
+  （GHSA等）は、初回実行で数万件規模の全履歴を取得しようとして実質ハングする。
+- KEV→CVE の `is_kev` 逆引き更新や EPSS のスコア更新は、対応する `source=cve` の Finding が
+  既にDBに存在する場合のみ効く。`app/jobs/daily.py` では nvd を最初に実行してから
+  epss/kev を実行する順序にしている（詳細はファイル内コメント参照）。
 
 ## 実装時の注意
 
