@@ -7,6 +7,7 @@ workflow (see .github/workflows/daily.yml) once or twice a day.
 import logging
 
 from app.db import SessionLocal
+from app.matching.engine import match_findings
 from app.sources import attack, capec, epss, ghsa, github_poc, kev, nvd
 
 logger = logging.getLogger("reconfeed.jobs.daily")
@@ -44,8 +45,11 @@ def main() -> None:
     db = SessionLocal()
     try:
         results = run_fetchers(db)
-        total = sum(len(v) for v in results.values())
-        logger.info("daily job: fetch stage complete, %d total new/changed findings", total)
+        touched_ids = sorted({fid for ids in results.values() for fid in ids})
+        logger.info("daily job: fetch stage complete, %d total new/changed findings", len(touched_ids))
+
+        new_matches = match_findings(db, touched_ids)
+        logger.info("daily job: matching stage complete, %d new tag matches", new_matches)
     finally:
         db.close()
 
