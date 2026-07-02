@@ -11,9 +11,18 @@ Two filters apply here rather than at match time, because they're per-user, not 
 """
 
 from sqlalchemy import and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 
-from app.models import Finding, FindingTagMatch, NotificationSent, TagAttackTechnique, TagKeyword, User, Watchlist
+from app.models import (
+    Finding,
+    FindingSource,
+    FindingTagMatch,
+    NotificationSent,
+    TagAttackTechnique,
+    TagKeyword,
+    User,
+    Watchlist,
+)
 
 
 _AV_CODE_TO_NAME = {"N": "NETWORK", "A": "ADJACENT_NETWORK", "L": "LOCAL", "P": "PHYSICAL"}
@@ -30,24 +39,22 @@ def _cvss_attack_vector(vector: str | None) -> str | None:
     return None
 
 
-def pending_findings_for_user(db: Session, user: User) -> list[Finding]:
-    """Findings matching this user's watchlists, ownership-scoped, CVSS-filtered, not yet
-    recorded in notifications_sent. Doesn't mark anything as notified — call mark_notified()
-    after the caller has actually delivered the notification."""
-    watchlist_tag_ids = {
-        tag.id for wl in db.query(Watchlist).filter(Watchlist.user_id == user.id) for tag in wl.tags
-    }
-    if not watchlist_tag_ids:
-        return []
+def _apply_cvss_filter(user: User, findings: list[Finding]) -> list[Finding]:
+    if not (user.cvss_filter_enabled and user.cvss_allowed_attack_vectors):
+        return findings
+    allowed = {v.strip().upper() for v in user.cvss_allowed_attack_vectors.split(",") if v.strip()}
+    return [f for f in findings if _cvss_attack_vector(f.cvss_vector) is None or _cvss_attack_vector(f.cvss_vector) in allowed]
 
-    already_notified = db.query(NotificationSent.finding_id).filter(NotificationSent.user_id == user.id)
 
-    query = (
+def _ownership_scoped_query(db: Session, user: User, tag_ids: set[int]) -> Query:
+    """Findings matched (via tag_ids) under this user's keyword-ownership scope: a match only
+    counts if the keyword/technique that triggered it is a preset or was added by this user."""
+    return (
         db.query(Finding)
         .join(FindingTagMatch, FindingTagMatch.finding_id == Finding.id)
         .outerjoin(TagKeyword, FindingTagMatch.matched_keyword_id == TagKeyword.id)
         .outerjoin(TagAttackTechnique, FindingTagMatch.matched_technique_id == TagAttackTechnique.id)
-        .filter(FindingTagMatch.tag_id.in_(watchlist_tag_ids))
+        .filter(FindingTagMatch.tag_id.in_(tag_ids))
         .filter(
             or_(
                 and_(
@@ -60,17 +67,58 @@ def pending_findings_for_user(db: Session, user: User) -> list[Finding]:
                 ),
             )
         )
-        .filter(~Finding.id.in_(already_notified))
-        .distinct()
     )
 
-    findings = query.all()
 
-    if user.cvss_filter_enabled and user.cvss_allowed_attack_vectors:
-        allowed = {v.strip().upper() for v in user.cvss_allowed_attack_vectors.split(",") if v.strip()}
-        findings = [f for f in findings if _cvss_attack_vector(f.cvss_vector) is None or _cvss_attack_vector(f.cvss_vector) in allowed]
+def user_watchlist_tag_ids(db: Session, user: User, watchlist_id: int | None = None) -> set[int]:
+    query = db.query(Watchlist).filter(Watchlist.user_id == user.id)
+    if watchlist_id is not None:
+        query = query.filter(Watchlist.id == watchlist_id)
+    return {tag.id for wl in query for tag in wl.tags}
 
-    return findings
+
+def pending_findings_for_user(db: Session, user: User) -> list[Finding]:
+    """Findings matching this user's watchlists, ownership-scoped, CVSS-filtered, not yet
+    recorded in notifications_sent. Doesn't mark anything as notified — call mark_notified()
+    after the caller has actually delivered the notification."""
+    tag_ids = user_watchlist_tag_ids(db, user)
+    if not tag_ids:
+        return []
+
+    already_notified = db.query(NotificationSent.finding_id).filter(NotificationSent.user_id == user.id)
+    findings = (
+        _ownership_scoped_query(db, user, tag_ids).filter(~Finding.id.in_(already_notified)).distinct().all()
+    )
+    return _apply_cvss_filter(user, findings)
+
+
+def matched_findings_for_user(
+    db: Session,
+    user: User,
+    watchlist_id: int | None = None,
+    tag_id: int | None = None,
+    source: FindingSource | None = None,
+    limit: int = 200,
+) -> list[Finding]:
+    """Browsing view for the dashboard: every ownership-scoped match for this user (regardless
+    of notification status), optionally narrowed to one watchlist, one tag, and/or one source."""
+    tag_ids = user_watchlist_tag_ids(db, user, watchlist_id)
+    if tag_id is not None:
+        tag_ids &= {tag_id}
+    if not tag_ids:
+        return []
+
+    query = _ownership_scoped_query(db, user, tag_ids)
+    if source is not None:
+        query = query.filter(Finding.source == source)
+
+    findings = (
+        query.distinct()
+        .order_by(Finding.published_at.desc().nullslast(), Finding.fetched_at.desc())
+        .limit(limit)
+        .all()
+    )
+    return _apply_cvss_filter(user, findings)
 
 
 def mark_notified(db: Session, user: User, findings: list[Finding]) -> None:
