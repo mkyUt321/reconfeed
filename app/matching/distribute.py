@@ -18,6 +18,7 @@ from app.models import (
     FindingSource,
     FindingTagMatch,
     NotificationSent,
+    Tag,
     TagAttackTechnique,
     TagKeyword,
     User,
@@ -125,3 +126,26 @@ def mark_notified(db: Session, user: User, findings: list[Finding]) -> None:
     for f in findings:
         db.add(NotificationSent(user_id=user.id, finding_id=f.id))
     db.commit()
+
+
+def matched_tag_names_for_findings(db: Session, user: User, finding_ids: list[int]) -> dict[int, list[str]]:
+    """finding_id -> sorted list of matched tag names, respecting this user's ownership scope
+    (so we never display a tag name a user shouldn't be able to see)."""
+    tag_ids = user_watchlist_tag_ids(db, user)
+    if not tag_ids or not finding_ids:
+        return {}
+
+    rows = (
+        _ownership_scoped_query(db, user, tag_ids)
+        .join(Tag, Tag.id == FindingTagMatch.tag_id)
+        .filter(Finding.id.in_(finding_ids))
+        .with_entities(Finding.id, Tag.name)
+        .distinct()
+        .all()
+    )
+    result: dict[int, list[str]] = {}
+    for finding_id, tag_name in rows:
+        result.setdefault(finding_id, []).append(tag_name)
+    for k in result:
+        result[k].sort()
+    return result

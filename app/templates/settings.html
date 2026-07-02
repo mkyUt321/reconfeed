@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}通知設定 - ReconFeed{% endblock %}
+{% block content %}
+<h1>通知設定</h1>
+
+<form method="post" action="/settings" class="auth-form" style="max-width:480px;">
+  <label>通知先メールアドレス（未指定ならログイン用メールアドレス宛）
+    <input type="email" name="notify_email" value="{{ user.notify_email or '' }}" placeholder="{{ user.email }}">
+  </label>
+
+  <label>通知頻度
+    <input type="text" value="日次（固定・MVP範囲では変更不可）" disabled>
+  </label>
+
+  <fieldset style="border:1px solid var(--border);border-radius:6px;padding:0.75rem 1rem;">
+    <legend>CVSS補助フィルタ（任意）</legend>
+    <label style="flex-direction:row;align-items:center;gap:0.5rem;">
+      <input type="checkbox" name="cvss_filter_enabled" {% if user.cvss_filter_enabled %}checked{% endif %}>
+      有効にする（Attack Vectorで絞り込む）
+    </label>
+    <p class="hint">有効にした場合、以下でチェックしたAttack Vectorを持つCVEのみ通知対象になります
+      （CVSS情報がない検出結果には影響しません）。</p>
+    {% for v in attack_vectors %}
+    <label style="flex-direction:row;align-items:center;gap:0.5rem;">
+      <input type="checkbox" name="cvss_allowed_attack_vectors" value="{{ v }}" {% if v in allowed_vectors %}checked{% endif %}>
+      {{ v }}
+    </label>
+    {% endfor %}
+  </fieldset>
+
+  <button type="submit">保存</button>
+</form>
+{% endblock %}

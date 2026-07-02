@@ -3,8 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.auth.security import require_user
 from app.db import get_db
-from app.matching.distribute import matched_findings_for_user, user_watchlist_tag_ids
-from app.models import Finding, FindingSource, FindingTagMatch, Tag, User, Watchlist
+from app.matching.distribute import matched_findings_for_user, matched_tag_names_for_findings, user_watchlist_tag_ids
+from app.models import FindingSource, Tag, User, Watchlist
 from app.web.templating import templates
 
 router = APIRouter()
@@ -31,7 +31,7 @@ def dashboard(
     )
 
     finding_ids = [f.id for f in findings]
-    matched_tag_names = _matched_tag_names(db, user, finding_ids) if finding_ids else {}
+    matched_tag_names = matched_tag_names_for_findings(db, user, finding_ids)
 
     watchlists = db.query(Watchlist).filter(Watchlist.user_id == user.id).order_by(Watchlist.name).all()
     all_tag_ids = user_watchlist_tag_ids(db, user)
@@ -54,29 +54,3 @@ def dashboard(
             "selected_source": source,
         },
     )
-
-
-def _matched_tag_names(db: Session, user: User, finding_ids: list[int]) -> dict[int, list[str]]:
-    """finding_id -> sorted list of matched tag names, for display. Reuses the same
-    ownership-scoped filter as the main query so we don't leak a tag name the user
-    wouldn't otherwise see."""
-    from app.matching.distribute import _ownership_scoped_query
-
-    tag_ids = user_watchlist_tag_ids(db, user)
-    if not tag_ids or not finding_ids:
-        return {}
-
-    rows = (
-        _ownership_scoped_query(db, user, tag_ids)
-        .join(Tag, Tag.id == FindingTagMatch.tag_id)
-        .filter(Finding.id.in_(finding_ids))
-        .with_entities(Finding.id, Tag.name)
-        .distinct()
-        .all()
-    )
-    result: dict[int, list[str]] = {}
-    for finding_id, tag_name in rows:
-        result.setdefault(finding_id, []).append(tag_name)
-    for k in result:
-        result[k].sort()
-    return result
