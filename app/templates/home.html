@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}ReconFeed{% endblock %}
+{% block content %}
+{% if user %}
+<h1>ようこそ、{{ user.email }} さん</h1>
+<p>ウォッチリストに該当する検出結果は<a href="/dashboard">ダッシュボード</a>で確認できます。</p>
+{% else %}
+<h1>ReconFeed</h1>
+<p>セキュリティ研究者向けの脆弱性・攻撃手法モニタリングサービスです。</p>
+<p>CVE / CISA KEV / EPSS / GHSA / GitHub PoC / MITRE ATT&amp;CK・CAPEC の更新を、
+   あなたの研究テーマに合わせて日次メールで通知します。</p>
+<p><a href="/signup">サインアップ</a> または <a href="/login">ログイン</a> して始めましょう。</p>
+{% endif %}
+{% endblock %}
