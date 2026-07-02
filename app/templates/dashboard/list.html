@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}ダッシュボード - ReconFeed{% endblock %}
+{% block content %}
+<h1>ダッシュボード</h1>
+
+<form method="get" action="/dashboard" class="filters">
+  <label>ウォッチリスト
+    <select name="watchlist_id" onchange="this.form.submit()">
+      <option value="">すべて</option>
+      {% for wl in watchlists %}
+      <option value="{{ wl.id }}" {% if selected_watchlist_id == wl.id %}selected{% endif %}>{{ wl.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>タグ
+    <select name="tag_id" onchange="this.form.submit()">
+      <option value="">すべて</option>
+      {% for tag in tags %}
+      <option value="{{ tag.id }}" {% if selected_tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>情報源
+    <select name="source" onchange="this.form.submit()">
+      <option value="">すべて</option>
+      {% for s in sources %}
+      <option value="{{ s.value }}" {% if selected_source == s.value %}selected{% endif %}>{{ s.value }}</option>
+      {% endfor %}
+    </select>
+  </label>
+</form>
+
+{% if not watchlists %}
+<p class="hint">ウォッチリストがまだありません。<a href="/watchlists/new">ウォッチリストを作成</a>すると検出結果が表示されます。</p>
+{% endif %}
+
+<table>
+  <thead>
+    <tr>
+      <th>情報源</th>
+      <th>ID / タイトル</th>
+      <th>CVSS</th>
+      <th>EPSS</th>
+      <th>該当タグ</th>
+      <th>公開日</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in findings %}
+    <tr>
+      <td>{{ f.source.value }}</td>
+      <td>
+        <a href="{{ f.raw_url }}" target="_blank" rel="noopener">{{ f.title }}</a>
+        {% if f.is_kev %}<span class="badge badge-kev">KEV</span>{% endif %}
+      </td>
+      <td>{{ "%.1f"|format(f.cvss_score) if f.cvss_score is not none else "-" }}</td>
+      <td>
+        {% if f.epss_score is not none %}
+        <span class="badge {% if f.epss_score >= 0.5 %}badge-epss{% endif %}">{{ "%.2f"|format(f.epss_score) }}</span>
+        {% else %}-{% endif %}
+      </td>
+      <td>
+        <div class="tag-list">
+          {% for name in matched_tag_names.get(f.id, []) %}
+          <span class="chip">{{ name }}</span>
+          {% endfor %}
+        </div>
+      </td>
+      <td>{{ f.published_at.strftime("%Y-%m-%d") if f.published_at else "-" }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="hint">該当する検出結果はまだありません。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
