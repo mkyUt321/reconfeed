@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ tag.name }} - タグ - ReconFeed{% endblock %}
+{% block content %}
+<p><a href="/tags">&larr; タグ一覧</a></p>
+<h1>{{ tag.name }} {% if tag.is_preset %}<span class="badge badge-preset">preset</span>{% endif %}</h1>
+
+<section class="card">
+  <h2>キーワード辞書</h2>
+  <div class="tag-list">
+    {% for kw in tag.keywords|sort(attribute="keyword") %}
+    <span class="chip">
+      {{ kw.keyword }}
+      {% if kw.is_preset %}<span class="badge badge-preset">preset</span>{% endif %}
+      {% if kw.created_by_user_id == user.id %}
+      <form method="post" action="/tags/{{ tag.id }}/keywords/{{ kw.id }}/delete" class="inline-form">
+        <button type="submit" title="削除">&times;</button>
+      </form>
+      {% endif %}
+    </span>
+    {% else %}
+    <p class="hint">キーワードがまだ登録されていません。</p>
+    {% endfor %}
+  </div>
+  <form method="post" action="/tags/{{ tag.id }}/keywords" class="inline-form" style="margin-top:1rem;">
+    <input type="text" name="keyword" placeholder="例: golden ticket" required>
+    <button type="submit">追加</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>ATT&amp;CK Technique</h2>
+  <div class="tag-list">
+    {% for t in tag.attack_techniques|sort(attribute="attack_technique_id") %}
+    <span class="chip">
+      {{ t.attack_technique_id }}
+      {% if t.is_preset %}<span class="badge badge-preset">preset</span>{% endif %}
+      {% if t.created_by_user_id == user.id %}
+      <form method="post" action="/tags/{{ tag.id }}/techniques/{{ t.id }}/delete" class="inline-form">
+        <button type="submit" title="削除">&times;</button>
+      </form>
+      {% endif %}
+    </span>
+    {% else %}
+    <p class="hint">ATT&amp;CK Techniqueがまだ登録されていません。</p>
+    {% endfor %}
+  </div>
+  <form method="post" action="/tags/{{ tag.id }}/techniques" class="inline-form" style="margin-top:1rem;">
+    <input type="text" name="attack_technique_id" placeholder="例: T1558.003" pattern="[Tt]\d{4}(\.\d{3})?" required>
+    <button type="submit">追加</button>
+  </form>
+</section>
+{% endblock %}

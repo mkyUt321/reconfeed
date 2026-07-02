@@ -1,0 +1,112 @@
+# プリセットタグの初期定義（コードと分離したシードデータ）。
+# 編集後は `python scripts/seed.py` を実行してDBへ反映する（冪等・is_preset=trueの行のみ操作、
+# ユーザーが追加したキーワード/ATT&CKエントリには一切触れない）。
+- name: Active Directory
+  keywords:
+    - active directory
+    - ad cs
+    - ntlm
+    - kerberos
+    - ldap
+    - domain controller
+    - dc sync
+    - ntds.dit
+  attack_techniques: [T1003, T1558, T1550, T1207]
+
+- name: Kerberos
+  keywords:
+    - kerberos
+    - kerberoasting
+    - as-rep
+    - golden ticket
+    - silver ticket
+    - tgt
+    - tgs
+  attack_techniques: [T1558, T1558.003, T1550.003]
+
+- name: Windows Privilege Escalation
+  keywords:
+    - privilege escalation
+    - token impersonation
+    - uac bypass
+    - seimpersonate
+    - named pipe
+  attack_techniques: [T1068, T1134, T1548.002]
+
+- name: Linux Privilege Escalation
+  keywords:
+    - privilege escalation
+    - suid
+    - sudo
+    - dirty pipe
+    - polkit
+    - capabilities
+  attack_techniques: [T1068, T1548.001, T1548.003]
+
+- name: Initial Access
+  keywords:
+    - initial access
+    - drive-by
+    - spearphishing
+    - public-facing
+    - valid accounts
+  attack_techniques: [T1190, T1133, T1566, T1078]
+
+- name: RCE
+  keywords:
+    - remote code execution
+    - rce
+    - unauthenticated
+    - deserialization
+    - command injection
+  attack_techniques: [T1190, T1210]
+
+- name: Authentication Bypass
+  keywords:
+    - authentication bypass
+    - auth bypass
+    - improper authentication
+    - session fixation
+  attack_techniques: [T1078, T1556]
+
+- name: Credential Access
+  keywords:
+    - credential
+    - password dump
+    - lsass
+    - cleartext
+    - secretsdump
+  attack_techniques: [T1003, T1555, T1552]
+
+- name: Lateral Movement
+  keywords:
+    - lateral movement
+    - pass-the-hash
+    - pass-the-ticket
+    - psexec
+    - wmi
+    - smb
+  attack_techniques: [T1021, T1550, T1570]
+
+- name: VPN/Edge Device Exploitation
+  keywords:
+    - vpn
+    - fortigate
+    - ivanti
+    - pulse secure
+    - citrix
+    - netscaler
+    - edge device
+    - firewall
+  attack_techniques: [T1190, T1133]
+
+- name: ADCS
+  keywords:
+    - adcs
+    - ad cs
+    - certificate services
+    - esc1
+    - esc8
+    - certificate template
+    - ntlm relay
+  attack_techniques: [T1649]
