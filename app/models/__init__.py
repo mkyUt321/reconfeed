@@ -1,4 +1,5 @@
 from app.db import Base
+from app.models.fetch_state import FetchState
 from app.models.finding import Finding, FindingSource, FindingTagMatch
 from app.models.notification import NotificationSent
 from app.models.tag import Tag, TagAttackTechnique, TagKeyword
@@ -17,4 +18,5 @@ __all__ = [
     "FindingSource",
     "FindingTagMatch",
     "NotificationSent",
+    "FetchState",
 ]

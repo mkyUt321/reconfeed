@@ -22,7 +22,10 @@ class Finding(Base):
     __table_args__ = (UniqueConstraint("source", "external_id", name="uq_findings_source_external_id"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    source: Mapped[FindingSource] = mapped_column(Enum(FindingSource, native_enum=False, length=20), nullable=False)
+    source: Mapped[FindingSource] = mapped_column(
+        Enum(FindingSource, native_enum=False, length=20, values_callable=lambda e: [m.value for m in e]),
+        nullable=False,
+    )
     external_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
 
     title: Mapped[str] = mapped_column(String(500), nullable=False)
