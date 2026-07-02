@@ -105,6 +105,17 @@ button.secondary {
   font-size: 0.9rem;
 }
 
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.inline-form {
+  display: inline-flex;
+  gap: 0.4rem;
+  align-items: center;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;

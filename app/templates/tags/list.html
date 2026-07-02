@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}タグ - ReconFeed{% endblock %}
+{% block content %}
+<h1>タグ</h1>
+<p class="hint">タグごとにキーワード辞書・ATT&amp;CK Techniqueを編集できます。プリセットタグは全ユーザー共有、
+  カスタムタグはあなただけに表示されます。</p>
+
+<section class="card">
+  <h2>プリセットタグ</h2>
+  <div class="tag-list">
+    {% for tag in preset_tags %}
+    <a class="chip" href="/tags/{{ tag.id }}">{{ tag.name }} <span class="badge badge-preset">preset</span></a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <h2>カスタムタグ</h2>
+  <div class="tag-list">
+    {% for tag in custom_tags %}
+    <a class="chip" href="/tags/{{ tag.id }}">{{ tag.name }}</a>
+    {% else %}
+    <p class="hint">まだカスタムタグがありません。</p>
+    {% endfor %}
+  </div>
+  <form method="post" action="/tags" class="auth-form" style="margin-top:1rem;">
+    <label>新しいタグ名
+      <input type="text" name="name" placeholder="例: Prompt Injection" required>
+    </label>
+    <button type="submit">タグを作成</button>
+  </form>
+</section>
+{% endblock %}
