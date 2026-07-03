@@ -11,6 +11,17 @@ on:
 jobs:
   run-daily-job:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+      NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+      # NOTE: the secret itself cannot be named GITHUB_TOKEN (GitHub reserves that name for
+      # the automatic Actions token). Store your GitHub PAT as GH_PAT and it's mapped to the
+      # GITHUB_TOKEN env var the app actually reads here.
+      GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+      APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -22,19 +33,6 @@ jobs:
 
       - name: Apply DB migrations
         run: alembic upgrade head
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Run fetch -> match -> notify pipeline
         run: python -m app.jobs.daily
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
-          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
-          # NOTE: the secret itself cannot be named GITHUB_TOKEN (GitHub reserves that name for
-          # the automatic Actions token). Store your GitHub PAT as GH_PAT and it's mapped to the
-          # GITHUB_TOKEN env var the app actually reads here.
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
-          APP_BASE_URL: ${{ secrets.APP_BASE_URL }}
