@@ -188,3 +188,26 @@ th, td {
   font-size: 0.85rem;
   color: var(--muted);
 }
+
+/* Layout utilities (kept inline styles out of templates so a strict CSP
+   with no 'unsafe-inline' in style-src still renders correctly). */
+.mt-1 { margin-top: 1rem; }
+.mt-15 { margin-top: 1.5rem; }
+.mt-075 { margin-top: 0.75rem; }
+.ml-1 { margin-left: 1rem; }
+.max-w-360 { max-width: 360px; }
+.max-w-480 { max-width: 480px; }
+
+.chip-label { cursor: pointer; }
+
+.fieldset-box {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+}
