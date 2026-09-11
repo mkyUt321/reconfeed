@@ -2,6 +2,9 @@
 {% block title %}サインアップ - ReconFeed{% endblock %}
 {% block content %}
 <h1>サインアップ</h1>
+{% if settings.demo_mode %}
+<p class="notice">これはデモ環境です。通知メールの実送信は検証段階のため行われません（登録した本人にも届かない場合があります）。また、検出データは直近数日分のみです。</p>
+{% endif %}
 {% if error %}<p class="error">{{ error }}</p>{% endif %}
 <form method="post" action="/signup" class="auth-form">
   <label>メールアドレス

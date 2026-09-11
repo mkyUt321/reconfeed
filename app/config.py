@@ -15,5 +15,9 @@ class Settings(BaseSettings):
 
     app_base_url: str = "http://localhost:8000"
 
+    # 検証段階では resend_from_email が onboarding@resend.dev のままのため、
+    # 通知メールは登録した本人以外には届かない。本番ドメインを検証してから false にする。
+    demo_mode: bool = True
+
 
 settings = Settings()
