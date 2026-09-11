@@ -98,6 +98,7 @@ cp .env.example .env
 | `RESEND_API_KEY` | メール送信 | [Resendダッシュボード](https://resend.com) > API Keys（`Sending access`権限） |
 | `RESEND_FROM_EMAIL` | 送信元アドレス | 検証段階は `onboarding@resend.dev` でOK（自分宛のみ送信可）。他ユーザーへ送るには自分のドメインをResendに追加・検証する |
 | `APP_BASE_URL` | メール本文のリンク生成用 | ローカルは `http://localhost:8000` |
+| `DEMO_MODE` | サインアップ・ダッシュボードに「これはデモ環境です」の注意書きを表示するか（既定 `true`） | `RESEND_FROM_EMAIL` を検証済み独自ドメインに切り替え、本番運用へ移行したら `false` にする |
 
 ### 3. DBスキーマ適用 + シードデータ投入
 
@@ -153,6 +154,8 @@ ruff check .
 6. Render側で以下の環境変数を設定（`sync: false` のためダッシュボードから手動入力が必要）:
    - `DATABASE_URL`, `NVD_API_KEY`, `GITHUB_TOKEN`, `RESEND_API_KEY`, `APP_BASE_URL`
    - `SESSION_SECRET` は `generateValue: true` によりRenderが自動生成
+   - `DEMO_MODE` は `render.yaml` に定義がないため既定値の `true` のまま動作する（デモ注意書きが表示される）。
+     独自ドメインをResendに検証し本番運用へ移行したら、Renderダッシュボードで `DEMO_MODE=false` を追加する
 7. 初回デプロイ後、シードデータを投入（ローカルから本番の `DATABASE_URL` を指して実行するのが簡単）:
    ```bash
    DATABASE_URL=<Neonの接続文字列> python scripts/seed.py
