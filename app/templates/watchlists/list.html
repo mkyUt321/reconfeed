@@ -15,10 +15,10 @@
     <span class="hint">タグが設定されていません。</span>
     {% endfor %}
   </div>
-  <p style="margin-top:0.75rem;">
+  <p class="mt-075">
     <a href="/watchlists/{{ wl.id }}/edit">編集</a>
-    <form method="post" action="/watchlists/{{ wl.id }}/delete" class="inline-form" style="margin-left:1rem;"
-          onsubmit="return confirm('「{{ wl.name }}」を削除しますか？');">
+    <form method="post" action="/watchlists/{{ wl.id }}/delete" class="inline-form ml-1"
+          data-confirm="「{{ wl.name }}」を削除しますか？">
       <button type="submit" class="secondary">削除</button>
     </form>
   </p>

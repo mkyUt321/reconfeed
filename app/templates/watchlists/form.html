@@ -7,13 +7,13 @@
 
 <form method="post" action="{% if watchlist %}/watchlists/{{ watchlist.id }}/edit{% else %}/watchlists{% endif %}">
   <label>ウォッチリスト名
-    <input type="text" name="name" value="{{ watchlist.name if watchlist else '' }}" required style="max-width:360px;">
+    <input type="text" name="name" value="{{ watchlist.name if watchlist else '' }}" required class="max-w-360">
   </label>
 
-  <h2 style="margin-top:1.5rem;">タグを選択（いずれか一致でOK）</h2>
+  <h2 class="mt-15">タグを選択（いずれか一致でOK）</h2>
   <div class="tag-list">
     {% for tag in tags %}
-    <label class="chip" style="cursor:pointer;">
+    <label class="chip chip-label">
       <input type="checkbox" name="tag_ids" value="{{ tag.id }}" {% if tag.id in selected_ids %}checked{% endif %}>
       {{ tag.name }}{% if tag.is_preset %} <span class="badge badge-preset">preset</span>{% endif %}
     </label>
@@ -22,6 +22,6 @@
     {% endfor %}
   </div>
 
-  <button type="submit" style="margin-top:1.5rem;">{% if watchlist %}保存{% else %}作成{% endif %}</button>
+  <button type="submit" class="mt-15">{% if watchlist %}保存{% else %}作成{% endif %}</button>
 </form>
 {% endblock %}
