@@ -5,7 +5,7 @@
 
 <form method="get" action="/dashboard" class="filters">
   <label>ウォッチリスト
-    <select name="watchlist_id" onchange="this.form.submit()">
+    <select name="watchlist_id" data-autosubmit>
       <option value="">すべて</option>
       {% for wl in watchlists %}
       <option value="{{ wl.id }}" {% if selected_watchlist_id == wl.id %}selected{% endif %}>{{ wl.name }}</option>
@@ -13,7 +13,7 @@
     </select>
   </label>
   <label>タグ
-    <select name="tag_id" onchange="this.form.submit()">
+    <select name="tag_id" data-autosubmit>
       <option value="">すべて</option>
       {% for tag in tags %}
       <option value="{{ tag.id }}" {% if selected_tag_id == tag.id %}selected{% endif %}>{{ tag.name }}</option>
@@ -21,7 +21,7 @@
     </select>
   </label>
   <label>情報源
-    <select name="source" onchange="this.form.submit()">
+    <select name="source" data-autosubmit>
       <option value="">すべて</option>
       {% for s in sources %}
       <option value="{{ s.value }}" {% if selected_source == s.value %}selected{% endif %}>{{ s.value }}</option>

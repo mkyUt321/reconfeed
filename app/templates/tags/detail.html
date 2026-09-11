@@ -21,7 +21,7 @@
     <p class="hint">キーワードがまだ登録されていません。</p>
     {% endfor %}
   </div>
-  <form method="post" action="/tags/{{ tag.id }}/keywords" class="inline-form" style="margin-top:1rem;">
+  <form method="post" action="/tags/{{ tag.id }}/keywords" class="inline-form mt-1">
     <input type="text" name="keyword" placeholder="例: golden ticket" required>
     <button type="submit">追加</button>
   </form>
@@ -44,7 +44,7 @@
     <p class="hint">ATT&amp;CK Techniqueがまだ登録されていません。</p>
     {% endfor %}
   </div>
-  <form method="post" action="/tags/{{ tag.id }}/techniques" class="inline-form" style="margin-top:1rem;">
+  <form method="post" action="/tags/{{ tag.id }}/techniques" class="inline-form mt-1">
     <input type="text" name="attack_technique_id" placeholder="例: T1558.003" pattern="[Tt]\d{4}(\.\d{3})?" required>
     <button type="submit">追加</button>
   </form>
