@@ -54,7 +54,7 @@ app/
   static/            最小限の CSS/JS
   sources/           情報源フェッチャ（nvd/kev/epss/ghsa/github_poc/attack/capec、1ファイル1ソース）
   matching/          engine.py（タグ単位マッチング）, distribute.py（ユーザー配布・所有権スコープ適用）
-  notify/            resend_client.py, digest.py
+  notify/            resend_client.py, digest.py, send_test.py（疎通確認CLI）
   jobs/
     daily.py         取得→保存→マッチング→配布→通知のパイプライン本体
 seed/

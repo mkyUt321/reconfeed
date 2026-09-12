@@ -3,7 +3,7 @@
 {% block content %}
 <h1>ダッシュボード</h1>
 {% if settings.demo_mode %}
-<p class="notice">これはデモ環境です。通知メールの実送信は検証段階のため行われません。また、検出データは直近数日分のみです。</p>
+<p class="notice">これはデモ環境です。通知メールは検証中の送信元アドレスから送られているため、運営者本人以外の宛先には届きません。また、検出データは直近数日分のみです。</p>
 {% endif %}
 
 <form method="get" action="/dashboard" class="filters">

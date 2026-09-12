@@ -9,6 +9,7 @@ import logging
 from app.db import SessionLocal
 from app.matching.engine import match_findings
 from app.notify.digest import send_all_digests
+from app.notify.resend_client import preflight
 from app.sources import attack, capec, epss, ghsa, github_poc, kev, nvd
 
 logger = logging.getLogger("reconfeed.jobs.daily")
@@ -51,6 +52,12 @@ def main() -> None:
 
         new_matches = match_findings(db, touched_ids)
         logger.info("daily job: matching stage complete, %d new tag matches", new_matches)
+
+        # Surfaced once up front rather than per user: a misconfigured sender fails every
+        # digest identically, and "0 findings notified" alone doesn't distinguish that from
+        # simply having nothing new to send.
+        for warning in preflight():
+            logger.warning("notification preflight: %s", warning)
 
         notified_count = send_all_digests(db)
         logger.info("daily job: notification stage complete, %d findings notified across all users", notified_count)

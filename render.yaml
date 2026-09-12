@@ -19,7 +19,12 @@ services:
         sync: false
       - key: RESEND_API_KEY
         sync: false
+      # sync: false rather than a hard-coded value so switching to a verified custom domain
+      # is a dashboard edit. A `value:` here would be re-applied on every blueprint sync.
       - key: RESEND_FROM_EMAIL
-        value: onboarding@resend.dev
+        sync: false
       - key: APP_BASE_URL
+        sync: false
+      # Set to false in the dashboard once a verified sender is in use, to drop the demo notice.
+      - key: DEMO_MODE
         sync: false

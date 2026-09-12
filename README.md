@@ -59,7 +59,7 @@ app/
   templates/          Jinja2テンプレート
   sources/           情報源フェッチャ（nvd/kev/epss/ghsa/github_poc/attack/capec）
   matching/          マッチングエンジン・配布ロジック
-  notify/            Resend送信・日次ダイジェスト生成
+  notify/            Resend送信・日次ダイジェスト生成・送信テストCLI
   jobs/daily.py      取得→マッチング→配布→通知 のバッチ本体
 seed/preset_tags.yaml プリセットタグのシードデータ
 scripts/seed.py       シードデータをDBへ投入するスクリプト
@@ -96,9 +96,9 @@ cp .env.example .env
 | `NVD_API_KEY` | NVD APIのレート制限緩和 | [NVD API Key申請ページ](https://nvd.nist.gov/developers/request-an-api-key) |
 | `GITHUB_TOKEN` | GHSA・GitHub PoC検索用 | GitHubの Settings > Developer settings > Fine-grained tokens（`Public repositories (read-only)` で作成） |
 | `RESEND_API_KEY` | メール送信 | [Resendダッシュボード](https://resend.com) > API Keys（`Sending access`権限） |
-| `RESEND_FROM_EMAIL` | 送信元アドレス | 検証段階は `onboarding@resend.dev` でOK（自分宛のみ送信可）。他ユーザーへ送るには自分のドメインをResendに追加・検証する |
-| `APP_BASE_URL` | メール本文のリンク生成用 | ローカルは `http://localhost:8000` |
-| `DEMO_MODE` | サインアップ・ダッシュボードに「これはデモ環境です」の注意書きを表示するか（既定 `true`） | `RESEND_FROM_EMAIL` を検証済み独自ドメインに切り替え、本番運用へ移行したら `false` にする |
+| `RESEND_FROM_EMAIL` | 送信元アドレス | `onboarding@resend.dev` はResendの共有サンドボックス送信元で、**APIキー所有者本人宛にしか配送されない**。他ユーザーへ送るには独自ドメインの検証が必要（下記「独自ドメインへの切り替え」参照） |
+| `APP_BASE_URL` | アプリの公開URL。`https://` で始まる場合のみセッションCookieに `Secure` が付く | ローカルは `http://localhost:8000` |
+| `DEMO_MODE` | サインアップ・ダッシュボードに「これはデモ環境です」の注意書きを**表示するか**（既定 `true`）。表示のみを制御し、メール送信自体は止めない | 検証済み独自ドメインに切り替えたら `false` にする |
 
 ### 3. DBスキーマ適用 + シードデータ投入
 
@@ -118,7 +118,17 @@ uvicorn app.main:app --reload
 
 `http://localhost:8000` でサインアップ・タグ編集・ウォッチリスト作成が行えます。
 
-### 5. バッチジョブの手動実行
+### 5. メール送信の疎通確認
+
+```bash
+python -m app.notify.send_test --to you@example.com
+```
+
+日次ダイジェストと同じ送信経路でテストメールを1通送ります。DBにもフェッチャにも触らないため即座に
+終わるので、Resendの設定（APIキー・送信元アドレス・ドメイン検証）だけを切り分けて確認できます。
+成功時は終了コード0、失敗時は1を返し、届かない理由が判明している場合は警告として表示されます。
+
+### 6. バッチジョブの手動実行
 
 ```bash
 python -m app.jobs.daily
@@ -127,7 +137,7 @@ python -m app.jobs.daily
 取得（7情報源）→マッチング→通知（Resend経由）を通しで実行します。初回は各フェッチャの初期ルックバック
 期間（既定7日）分のデータを取得するため、数分〜十数分かかります。
 
-### 6. テスト
+### 7. テスト
 
 ```bash
 pytest -v
@@ -152,10 +162,10 @@ ruff check .
 4. GitHubでPAT（Fine-grained, Public repositories read-only）を発行
 5. Renderで「New Blueprint」からこのリポジトリを指定し、`render.yaml` を読み込ませる
 6. Render側で以下の環境変数を設定（`sync: false` のためダッシュボードから手動入力が必要）:
-   - `DATABASE_URL`, `NVD_API_KEY`, `GITHUB_TOKEN`, `RESEND_API_KEY`, `APP_BASE_URL`
+   - `DATABASE_URL`, `NVD_API_KEY`, `GITHUB_TOKEN`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `APP_BASE_URL`, `DEMO_MODE`
    - `SESSION_SECRET` は `generateValue: true` によりRenderが自動生成
-   - `DEMO_MODE` は `render.yaml` に定義がないため既定値の `true` のまま動作する（デモ注意書きが表示される）。
-     独自ドメインをResendに検証し本番運用へ移行したら、Renderダッシュボードで `DEMO_MODE=false` を追加する
+   - 検証段階では `RESEND_FROM_EMAIL=onboarding@resend.dev` / `DEMO_MODE=true` を入れておく
+     （どちらも `sync: false` なので、独自ドメイン検証後はダッシュボードの編集だけで切り替えられる）
 7. 初回デプロイ後、シードデータを投入（ローカルから本番の `DATABASE_URL` を指して実行するのが簡単）:
    ```bash
    DATABASE_URL=<Neonの接続文字列> python scripts/seed.py
@@ -166,6 +176,49 @@ ruff check .
      `.github/workflows/daily.yml` 内で `GITHUB_TOKEN` 環境変数にマッピングしている）
 9. `.github/workflows/daily.yml` は1日2回（07:00 / 19:00 JST）自動実行される。
    `Actions` タブから `workflow_dispatch` で手動実行も可能
+
+## 独自ドメインへの切り替え（任意の宛先へ送れるようにする）
+
+既定の `onboarding@resend.dev` はResendの共有サンドボックス送信元で、**APIキー所有者本人のアドレス宛に
+しか配送されません**。登録した他ユーザーへ通知を届けるには、Resendで独自ドメインを検証する必要があります。
+これはDNS操作を伴う**アプリ外の作業**で、コード側は環境変数の差し替えだけで対応できるようになっています。
+
+手順の具体値（DNSレコードの内容・無料枠の上限・料金）は変動するため、**必ず
+[Resend公式ドキュメント](https://resend.com/docs)で最終確認してください**。以下は流れの目安です。
+
+1. **ドメインを用意する** — 送信専用のサブドメイン（例 `mail.example.com`）を切るのが一般的です。
+   ルートドメインとSPF/DMARCの設定を分離でき、万一送信レピュテーションを落としても本体に波及しません。
+   必要な条件は「TXT・CNAMEレコードを自由に追加できること」です。
+   - [ ] 完了判定: DNSレコードを追加・反映できる状態になっている
+2. **Resendにドメインを登録** — ダッシュボードの Domains から追加すると、設定すべきDNSレコードが表示されます。
+   - SPF（TXT）: このドメインからの送信をResendに許可する
+   - DKIM（TXT）: 送信メールに署名し、改ざん・なりすましを検出可能にする
+   - DMARC（TXT, 任意だが推奨）: SPF/DKIM失敗時の扱いを受信側に指示する
+   - [ ] 完了判定: 必要なレコードの一覧が表示されている
+3. **DNSにレコードを設定** — 表示された値をそのまま登録します（**値はアカウント固有なのでリポジトリには
+   コミットしないこと**）。反映には数分〜数十時間かかることがあります。
+   - [ ] 完了判定: Resendのダッシュボードでドメインが `Verified` になる
+4. **GitHub Actions の Secret を更新** — **実送信はこの経路でしか起きません**（Webアプリはメールを送りません）。
+   `Settings > Secrets and variables > Actions` の `RESEND_FROM_EMAIL` を検証済みドメイン上のアドレスに変更します
+   （`ReconFeed <notify@mail.example.com>` のような表示名付き形式も可）。ワークフロー側の編集は不要です。
+   - [ ] 完了判定: Secretの値が更新されている
+5. **疎通確認** — ローカルの `.env` の `RESEND_FROM_EMAIL` も同じ値にして実行します。
+   ```bash
+   python -m app.notify.send_test --to <自分以外のアドレス>
+   ```
+   - [ ] 完了判定: 自分以外の宛先に実際に届く（これが切り替え成功の判定基準）
+6. **本番表示を切り替え** — Renderダッシュボードで `RESEND_FROM_EMAIL` を更新し、`DEMO_MODE=false` にして
+   デモ注意書きを消します。
+   - [ ] 完了判定: `/signup`・`/dashboard` から注意書きが消える
+
+### 切り替え後に検討すべきこと
+
+- **送信上限**: Resendの無料枠には1日/1か月あたりの送信数上限があります（**最新値は公式の料金ページで要確認**）。
+  本アプリは「ユーザー数 × 1日2回」の送信なので、登録者が増えると上限に達しうる点に注意してください。
+- **バウンス処理**: 現在バウンス・苦情の受信（Webhook）は未実装です。存在しないアドレスへ送り続けると
+  送信レピュテーションが落ちるため、公開範囲を広げる場合は導入を検討してください。
+- **配信停止**: 現在 unsubscribe リンク・`List-Unsubscribe` ヘッダは未実装です。不特定多数へ送るなら必要になります。
+- **宛先の未検証**: `users.notify_email` は自己申告で、所有確認をしていません（メール認証はMVP対象外）。
 
 ## 既知の制限事項
 
